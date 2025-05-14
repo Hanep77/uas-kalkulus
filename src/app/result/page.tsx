@@ -52,7 +52,25 @@ export default function Result() {
   const [berdasarkanJumlah, setBerdasarkanJumlah] = useState<BerdasarkanJumlahType>();
   const [berdasarkanPendapatan, setBerdasarkanPendapatan] = useState<BerdasarkanPendapatanType>();
   const [, setKategoriKomoditas] = useState<Record<string, string | number>[]>([]);
-  const [data, setData] = useState();
+  const [data, setData] = useState({
+    labels: ["test"],
+    datasets: [
+      {
+        label: 'IDR',
+        data: [1],
+        backgroundColor: [
+          'red',
+          'green',
+          'blue',
+          'yellow',
+          'purple',
+          'gray',
+          'orange',
+        ],
+        borderWidth: 1,
+      },
+    ],
+  });
   const [dataBarChart, setDataBarChart] = useState({
     labels: ['2022', '2023', '2024', '2025', 'Pendapatan anda', 'Pendapatan Ideal'],
     datasets: [
@@ -123,7 +141,6 @@ export default function Result() {
       const pendapatan_sekarang = data.rekomendasi_keuangan.berdasarkan_jumlah_anggota_keluarga.pendapatan;
       const ideal = data.rekomendasi_keuangan.berdasarkan_jumlah_anggota_keluarga.total_kebutuhan_kapita;
       const updatedDatasets = prev.datasets.map((ds, i) => {
-        // Jika i === 1 atau i === 2, update data[3]
         if (i === 1 || i === 2) {
           const updatedData = [...ds.data];
           updatedData[3] = i === 1 ? pendapatan_sekarang : ideal;
@@ -134,7 +151,6 @@ export default function Result() {
           };
         }
 
-        // Jika bukan, tetapkan seperti semula
         return ds;
       });
 
