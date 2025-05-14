@@ -1,10 +1,18 @@
 "use client";
 
+import { Chart as ChartJS, Legend, Tooltip, ArcElement, Title, BarElement, LinearScale, CategoryScale } from "chart.js";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import Chart from "react-google-charts";
+import { Bar, Pie } from "react-chartjs-2";
 
-type KebutuhanPokokType = {
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
+
+const options = {
+  responsive: true,
+  maintainAspectRatio: true,
+}
+
+type KebutuhanKapitaType = {
   id: number,
   komoditas_id: number,
   nama: string,
@@ -19,8 +27,8 @@ type KebutuhanPokokType = {
 type BerdasarkanJumlahType = {
   fleksibel: number,
   jumlah_anggota_keluarga: number,
-  kebutuhan_pokok: number,
-  kebutuhan_pokok_per_orang: number,
+  kebutuhan_kapita: number,
+  kebutuhan_kapita_per_orang: number,
   note: string,
   pendapatan: number,
   saving: number,
@@ -29,39 +37,42 @@ type BerdasarkanJumlahType = {
 
 
 type BerdasarkanPendapatanType = {
-  kebutuhan_pokok_per_orang: number,
+  kebutuhan_kapita_per_orang: number,
   note: string,
   pendapatan: number,
   total_kebutuhan: number,
-  maximal: {
-    kebutuhan_pokok: number,
-    fleksibel: number,
-    saving: number,
-    jumlah_anggota_keluarga: number,
-  },
-  rekomendasi: {
-    rekomendasi_kebutuhan_pokok: number,
-    rekomendasi_fleksibel: number,
-    rekomendasi_saving: number,
-    rekomendasi_jumlah_anggota_keluarga: number,
-  }
+  kebutuhan_kapita: number,
+  fleksibel: number,
+  saving: number,
+  jumlah_anggota_keluarga: number,
 }
 
 export default function Result() {
-  const [kebutuhanPokok, setKebutuhanPokok] = useState<KebutuhanPokokType[]>();
+  const [kebutuhanKapita, setKebutuhanKapita] = useState<KebutuhanKapitaType[]>();
   const [berdasarkanJumlah, setBerdasarkanJumlah] = useState<BerdasarkanJumlahType>();
   const [berdasarkanPendapatan, setBerdasarkanPendapatan] = useState<BerdasarkanPendapatanType>();
-
-  const data = [
-    ["Task", "IDR"],
-    ["Pangan", 900000],
-    ["Perumahan", 500000],
-    ["Aneka barang dan jasa", 200000],
-  ];
-
-  const options = {
-    tooltip: {},
-  };
+  const [, setKategoriKomoditas] = useState<Record<string, string | number>[]>([]);
+  const [data, setData] = useState();
+  const [dataBarChart, setDataBarChart] = useState({
+    labels: ['2022', '2023', '2024', '2025', 'Pendapatan anda', 'Pendapatan Ideal'],
+    datasets: [
+      {
+        label: 'Garis Kemiskinan',
+        data: [498711, 537497, 565377, 576176],
+        backgroundColor: 'rgba(255, 99, 132, 1)',
+      },
+      {
+        label: 'Pendapatan Anda',
+        data: [, , , 5000000,],
+        backgroundColor: 'rgba(53, 162, 235, 1)',
+      },
+      {
+        label: 'Pendapatan Ideal',
+        data: [, , , 5000000,],
+        backgroundColor: 'lightgreen',
+      },
+    ]
+  });
 
   const formatToIDR = (amount?: number) => {
     const formatted = amount?.toLocaleString('id-ID', {
@@ -76,14 +87,73 @@ export default function Result() {
     if (!stringData) return
     const data = JSON.parse(stringData);
     console.log(data);
-    setKebutuhanPokok(data.kebutuhan_pokok);
+
+    const dataKategoriKomoditas = data.kebutuhan_kapita.reduce((acc: Record<string, number>, item: KebutuhanKapitaType) => {
+      if (!acc[item.kategori]) {
+        acc[item.kategori] = 0
+      }
+      acc[item.kategori] += item.nilai_rupiah
+      return acc
+    }, {} as Record<string, number>)
+
+    const labels = Object.keys(dataKategoriKomoditas);
+    const nilaiDataset = labels.map(label => dataKategoriKomoditas[label]);
+
+    setData({
+      labels: labels,
+      datasets: [
+        {
+          label: 'IDR',
+          data: nilaiDataset,
+          backgroundColor: [
+            'red',
+            'green',
+            'blue',
+            'yellow',
+            'purple',
+            'gray',
+            'orange',
+          ],
+          borderWidth: 1,
+        },
+      ],
+    });
+
+    setDataBarChart(prev => {
+      const pendapatan_sekarang = data.rekomendasi_keuangan.berdasarkan_jumlah_anggota_keluarga.pendapatan;
+      const ideal = data.rekomendasi_keuangan.berdasarkan_jumlah_anggota_keluarga.total_kebutuhan_kapita;
+      const updatedDatasets = prev.datasets.map((ds, i) => {
+        // Jika i === 1 atau i === 2, update data[3]
+        if (i === 1 || i === 2) {
+          const updatedData = [...ds.data];
+          updatedData[3] = i === 1 ? pendapatan_sekarang : ideal;
+
+          return {
+            ...ds,
+            data: updatedData,
+          };
+        }
+
+        // Jika bukan, tetapkan seperti semula
+        return ds;
+      });
+
+      return {
+        ...prev,
+        datasets: updatedDatasets,
+      };
+    });
+
+    setKategoriKomoditas(dataKategoriKomoditas);
+
+    setKebutuhanKapita(data.kebutuhan_kapita);
     setBerdasarkanJumlah(data.rekomendasi_keuangan.berdasarkan_jumlah_anggota_keluarga);
     setBerdasarkanPendapatan(data.rekomendasi_keuangan.berdasarkan_pendapatan);
   }, []);
 
   return <div className="">
     <div className="max-w-screen-lg px-4 xl:px-0 m-auto py-4">
-      <h2 className="text-3xl font-bold mb-3">Hasil</h2>
+      {/* <h2 className="text-3xl font-bold mb-3">Hasil</h2> */}
       <div>
         <div className="p-4 border border-zinc-300 mb-4 rounded bg-zinc-100 text-zinc-700 flex justify-between">
           <div className="mb-3">
@@ -91,57 +161,76 @@ export default function Result() {
             <p><span className="font-medium">Pendapatan</span>: {formatToIDR(berdasarkanJumlah?.pendapatan)}</p>
             <p><span className="font-medium">Anggota Keluarga</span>: {berdasarkanJumlah?.jumlah_anggota_keluarga} orang</p>
           </div>
-          {/* <div> */}
-          {/*   <h4 className="text-xl font-bold mb-1">Analisis Pengeluaran</h4> */}
-          {/*   <p><span className="font-medium">Pengeluaran Ideal</span>: IDR 5.000.000</p> */}
-          {/* </div> */}
         </div>
         <div className="p-4 border border-zinc-300 mb-4 rounded bg-zinc-100 text-zinc-700 flex justify-between">
-          <div className="mb-3 flex flex-col gap-1">
+          <div className="mb-3 flex flex-col gap-1 items-start">
             <h4 className="text-xl font-bold mb-2">Rekomendasi keuangan berdasarkan jumlah anggota keluarga</h4>
-            <div className="py-1 px-2 mb-2 bg-sky-300/30 border border-sky-700 rounded text-sky-900">
-              <p className="italic">Note: Rekomendasi berdasarkan konsep pokok: 50%, fleksibel: 30%, saving: 20%</p>
+            <div className="py-1 px-2 mb-2 bg-sky-300/30 border border-sky-700 rounded text-sky-900 text-sm">
+              <p className="italic">Note: {berdasarkanJumlah?.note}</p>
             </div>
             <p><span className="font-medium">Fleksibel</span>: {formatToIDR(berdasarkanJumlah?.fleksibel)}</p>
             <p><span className="font-medium">Saving</span>: {formatToIDR(berdasarkanJumlah?.saving)}</p>
-            <p><span className="font-medium">Kebutuhan Pokok Perorang</span>: {formatToIDR(berdasarkanJumlah?.kebutuhan_pokok_per_orang)}</p>
-            <p><span className="font-medium">Kebutuhan Pokok</span>: {formatToIDR(berdasarkanJumlah?.kebutuhan_pokok)}</p>
+            <p><span className="font-medium">Kebutuhan Kapita Perorang</span>: {formatToIDR(berdasarkanJumlah?.kebutuhan_kapita_per_orang)}</p>
+            <p><span className="font-medium">Kebutuhan Kapita</span>: {formatToIDR(berdasarkanJumlah?.kebutuhan_kapita)}</p>
             <p><span className="font-medium">Total Pendapatan Ideal</span>: {formatToIDR(berdasarkanJumlah?.total_kebutuhan)}</p>
           </div>
         </div>
         <div className="p-4 border border-zinc-300 rounded bg-zinc-100 text-zinc-700 flex justify-between">
-          <div className="mb-3 flex flex-col gap-1">
+          <div className="mb-3 flex flex-col gap-1 items-start">
             <h4 className="text-xl font-bold mb-2">Rekomendasi berdasarkan pendapatan</h4>
-            <div className="py-1 px-2 mb-2 bg-sky-300/30 border border-sky-700 rounded text-sky-900">
-              <p className="italic">Note: Rekomendasi berdasarkan konsep pokok: 50%, fleksibel: 30%, saving: 20%</p>
+            <div className="py-1 px-2 mb-2 bg-sky-300/30 border border-sky-700 rounded text-sky-900 text-sm">
+              <p className="italic">Note: {berdasarkanPendapatan?.note}</p>
             </div>
-            <p><span className="font-medium">Fleksibel</span>: {formatToIDR(berdasarkanPendapatan?.maximal.fleksibel)}</p>
-            <p><span className="font-medium">Saving</span>: {formatToIDR(berdasarkanPendapatan?.maximal.saving)}</p>
-            <p><span className="font-medium">Kebutuhan Pokok Perorang</span>: {formatToIDR(berdasarkanPendapatan?.kebutuhan_pokok_per_orang)}</p>
-            <p><span className="font-medium">Kebutuhan Pokok</span>: {formatToIDR(berdasarkanPendapatan?.maximal.kebutuhan_pokok)}</p>
-            <p><span className="font-medium">Jumlah Anggota Keluarga Ideal</span>: {berdasarkanPendapatan?.maximal.jumlah_anggota_keluarga}</p>
+            <p><span className="font-medium">Fleksibel</span>: {formatToIDR(berdasarkanPendapatan?.fleksibel)}</p>
+            <p><span className="font-medium">Saving</span>: {formatToIDR(berdasarkanPendapatan?.saving)}</p>
+            <p><span className="font-medium">Kebutuhan Kapita Perorang</span>: {formatToIDR(berdasarkanPendapatan?.kebutuhan_kapita_per_orang)}</p>
+            <p><span className="font-medium">Kebutuhan Kapita</span>: {formatToIDR(berdasarkanPendapatan?.kebutuhan_kapita)}</p>
+            <p><span className="font-medium">Jumlah Anggota Keluarga Ideal</span>: {berdasarkanPendapatan?.jumlah_anggota_keluarga}</p>
           </div>
         </div>
       </div>
-      <div className="mt-8">
-        <h4 className="text-xl font-bold mb-3 text-zinc-700">Pie chart pengeluaran berdasarkan kategori</h4>
-        <Chart
-          chartType="PieChart"
-          data={data}
-          options={options}
-          width={"100%"}
-          height={"400px"}
-        />
+      <div className="my-8 text-center bg-zinc-100 p-4 border border-zinc-300 rounded">
+        <div className="flex justify-evenly items-center">
+          <div className="w-96">
+            <h4 className="text-xl font-bold mb-3 text-zinc-700">Pie chart pengeluaran berdasarkan kategori</h4>
+            {data &&
+              <Pie data={data} options={options} />
+            }
+          </div>
+          <div className="w-96 h-96">
+            <h4 className="text-xl font-bold mb-3 text-zinc-700">Chart garis kemiskinan</h4>
+            {dataBarChart &&
+              <Bar data={dataBarChart} options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'top' as const,
+                  },
+                  title: {
+                    display: true,
+                    text: 'Chart.js Bar Chart',
+                  },
+                },
+              }} />
+            }
+          </div>
+        </div>
       </div>
       <div>
-        <h4 className="text-xl font-bold mb-3 text-zinc-700">Tabel Detail Pengeluaran Kebutuhan Pokok</h4>
+        <h4 className="text-xl font-bold mb-3 text-zinc-700">Pengeluaran Perkapita Berdasarkan Komoditas Tahun 2025</h4>
+        <div className="px-2 border-s-2 border-zinc-500 text-sm italic text-zinc-500 mb-3">
+          <p>Note: Data dibawah dibuat berdasarkan data 2023 yang disesuaikan dengan inflasi tahunan</p>
+        </div>
+        <div className="px-2 border-s-2 border-zinc-500 text-sm italic text-zinc-500 mb-3">
+          <p>Note: Jika merasa aneh dengan tabel dibawah kaerna merasa tidak relevan, silahkan salahkan BPS</p>
+        </div>
         <div className="bg-zinc-100 border border-zinc-300 rounded overflow-auto">
           <table className="table w-full text-sm text-left rtl:text-right">
             <thead className="">
               <tr>
                 <th className="py-3 px-6">Nama</th>
                 <th className="py-3 px-6">Kategori</th>
-                <th className="py-3 px-6">Tahun</th>
                 <th className="py-3 px-6">Jumlah Anggota</th>
                 <th className="py-3 px-6">Nilai</th>
                 <th className="py-3 px-6">Total</th>
@@ -149,21 +238,24 @@ export default function Result() {
               </tr>
             </thead>
             <tbody className="text-zinc-600">
-              {kebutuhanPokok?.map(item => (
+              {kebutuhanKapita?.map(item => (
                 <tr className="" key={item.id}>
                   <td className="py-3 px-6 whitespace-nowrap">{item.nama}</td>
                   <td className="py-3 px-6 whitespace-nowrap">{item.kategori}</td>
-                  <td className="py-3 px-6 whitespace-nowrap">{item.tahun}</td>
                   <td className="py-3 px-6 whitespace-nowrap">{item.jumlah_anggota_keluarga}</td>
                   <td className="py-3 px-6 whitespace-nowrap">{formatToIDR(item.nilai_rupiah)}</td>
                   <td className="py-3 px-6 whitespace-nowrap">{formatToIDR(item.total_harga)}</td>
                   <td className="flex gap-2 py-3 px-6">
-                    <Link href={"/dashboard/" + "/edit/"} className="text-yellow-500">edit</Link>
+                    <Link href={"/dashboard/" + "/edit/"} className="bg-yellow-300 hover:bg-yellow-300/70 border border-yellow-700 px-2 rounded-full text-yellow-700">edit</Link>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="px-2 border-s-2 border-zinc-500 text-sm italic text-zinc-500 mt-3">
+          <p>source: BPS, Survei Sosial Ekonomi Nasional (Susenas) Maret 2022 dan Maret 2023/BPS-Statistics Indonesia, National
+            Socioeconomic Survey March 2022 and March 2023</p>
         </div>
       </div>
     </div>

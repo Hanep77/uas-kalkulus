@@ -70,16 +70,16 @@ export default function Page() {
               required
             />
           </div>
-          <div className="flex flex-col">
-            <input
-              type="number"
-              id="tahun"
-              placeholder="tahun"
-              name="tahun"
-              className="bg-zinc-200 h-10 px-2 rounded"
-              required
-            />
-          </div>
+          {/* <div className="flex flex-col"> */}
+          {/*   <input */}
+          {/*     type="number" */}
+          {/*     id="tahun" */}
+          {/*     placeholder="tahun" */}
+          {/*     name="tahun" */}
+          {/*     className="bg-zinc-200 h-10 px-2 rounded" */}
+          {/*     required */}
+          {/*   /> */}
+          {/* </div> */}
           <button type="submit" className="flex justify-center gap-2 items-center h-10 bg-[#043873] cursor-pointer text-white w-full rounded">
             submit
             <div className={`${!isLoading && "hidden"} h-6 w-6 border-2 rounded-full border-x-transparent animate-spin`}></div>
