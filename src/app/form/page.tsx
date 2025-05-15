@@ -38,8 +38,9 @@ export default function Page() {
   }
 
   return <div className="min-h-screen flex justify-center items-center">
-    <div className="max-w-screen-lg px-4 xl:px-0 m-auto flex flex-col md:flex-row gap-12">
+    <div className="max-w-screen-lg px-4 xl:px-0 m-auto flex flex-col md:items-center md:flex-row gap-8 md:gap-12">
       <div className="md:w-1/2">
+        <button type="button" onClick={() => router.back()} className="bg-zinc-200 hover:bg-zinc-300 cursor-pointer inline-block px-4 py-1 rounded-full border border-zinc-300 mb-3">{"<-"} back</button>
         <h2 className="text-3xl font-bold mb-3">Penasaran  Seberapa Ideal Keluargamu?</h2>
         <p className="text-justify text-zinc-700">Mulai sekarang, cukup isi beberapa informasi sederhan
           tentang keluarga kamu, dan biarkan IdealKeluarga
@@ -49,7 +50,7 @@ export default function Page() {
           kehidupan bersama!”</p>
       </div>
       <div className="md:w-1/2">
-        <form onSubmit={handleForm} className="flex flex-col gap-3">
+        <form onSubmit={handleForm} className="flex flex-col gap-3 border bg-zinc-100 p-4 rounded border-zinc-300">
           <div className="flex flex-col">
             <input
               type="number"
@@ -87,5 +88,5 @@ export default function Page() {
         </form>
       </div>
     </div>
-  </div>
+  </div >
 }

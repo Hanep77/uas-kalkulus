@@ -27,12 +27,12 @@ type KebutuhanKapitaType = {
 type BerdasarkanJumlahType = {
   fleksibel: number,
   jumlah_anggota_keluarga: number,
-  kebutuhan_kapita: number,
+  total_kebutuhan: number,
   kebutuhan_kapita_per_orang: number,
   note: string,
   pendapatan: number,
   saving: number,
-  total_kebutuhan: number,
+  total_kebutuhan_kapita: number,
 }
 
 
@@ -40,10 +40,10 @@ type BerdasarkanPendapatanType = {
   kebutuhan_kapita_per_orang: number,
   note: string,
   pendapatan: number,
-  total_kebutuhan: number,
-  kebutuhan_kapita: number,
+  total_kebutuhan_kapita: number,
   fleksibel: number,
   saving: number,
+  total_kebutuhan: number,
   jumlah_anggota_keluarga: number,
 }
 
@@ -75,7 +75,7 @@ export default function Result() {
     labels: ['2022', '2023', '2024', '2025', 'Pendapatan anda', 'Pendapatan Ideal'],
     datasets: [
       {
-        label: 'Garis Kemiskinan',
+        label: 'Garis Kemiskinan (per-orang)',
         data: [498711, 537497, 565377, 576176],
         backgroundColor: 'rgba(255, 99, 132, 1)',
       },
@@ -139,7 +139,7 @@ export default function Result() {
 
     setDataBarChart(prev => {
       const pendapatan_sekarang = data.rekomendasi_keuangan.berdasarkan_jumlah_anggota_keluarga.pendapatan;
-      const ideal = data.rekomendasi_keuangan.berdasarkan_jumlah_anggota_keluarga.total_kebutuhan_kapita;
+      const ideal = data.rekomendasi_keuangan.berdasarkan_jumlah_anggota_keluarga.total_kebutuhan;
       const updatedDatasets = prev.datasets.map((ds, i) => {
         if (i === 1 || i === 2) {
           const updatedData = [...ds.data];
@@ -187,7 +187,7 @@ export default function Result() {
             <p><span className="font-medium">Fleksibel</span>: {formatToIDR(berdasarkanJumlah?.fleksibel)}</p>
             <p><span className="font-medium">Saving</span>: {formatToIDR(berdasarkanJumlah?.saving)}</p>
             <p><span className="font-medium">Kebutuhan Kapita Perorang</span>: {formatToIDR(berdasarkanJumlah?.kebutuhan_kapita_per_orang)}</p>
-            <p><span className="font-medium">Kebutuhan Kapita</span>: {formatToIDR(berdasarkanJumlah?.kebutuhan_kapita)}</p>
+            <p><span className="font-medium">Kebutuhan Kapita</span>: {formatToIDR(berdasarkanJumlah?.total_kebutuhan_kapita)}</p>
             <p><span className="font-medium">Total Pendapatan Ideal</span>: {formatToIDR(berdasarkanJumlah?.total_kebutuhan)}</p>
           </div>
         </div>
@@ -200,20 +200,20 @@ export default function Result() {
             <p><span className="font-medium">Fleksibel</span>: {formatToIDR(berdasarkanPendapatan?.fleksibel)}</p>
             <p><span className="font-medium">Saving</span>: {formatToIDR(berdasarkanPendapatan?.saving)}</p>
             <p><span className="font-medium">Kebutuhan Kapita Perorang</span>: {formatToIDR(berdasarkanPendapatan?.kebutuhan_kapita_per_orang)}</p>
-            <p><span className="font-medium">Kebutuhan Kapita</span>: {formatToIDR(berdasarkanPendapatan?.kebutuhan_kapita)}</p>
+            <p><span className="font-medium">Kebutuhan Kapita</span>: {formatToIDR(berdasarkanPendapatan?.total_kebutuhan_kapita)}</p>
             <p><span className="font-medium">Jumlah Anggota Keluarga Ideal</span>: {berdasarkanPendapatan?.jumlah_anggota_keluarga}</p>
           </div>
         </div>
       </div>
       <div className="my-8 text-center bg-zinc-100 p-4 border border-zinc-300 rounded">
-        <div className="flex justify-evenly items-center">
-          <div className="w-96">
+        <div className="flex flex-col md:flex-row md:justify-evenly items-center pb-10 md:pb-0">
+          <div className="w-full sm:w-96 mb-10 md:mb-0">
             <h4 className="text-xl font-bold mb-3 text-zinc-700">Pie chart pengeluaran berdasarkan kategori</h4>
             {data &&
               <Pie data={data} options={options} />
             }
           </div>
-          <div className="w-96 h-96">
+          <div className="w-full h-80 md:w-96 md:h-96">
             <h4 className="text-xl font-bold mb-3 text-zinc-700">Chart garis kemiskinan</h4>
             {dataBarChart &&
               <Bar data={dataBarChart} options={{
@@ -222,10 +222,6 @@ export default function Result() {
                 plugins: {
                   legend: {
                     position: 'top' as const,
-                  },
-                  title: {
-                    display: true,
-                    text: 'Chart.js Bar Chart',
                   },
                 },
               }} />
@@ -276,5 +272,4 @@ export default function Result() {
       </div>
     </div>
   </div>
-
 }
