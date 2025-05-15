@@ -1,9 +1,12 @@
 "use client";
 
+import axios from "axios";
 import { Chart as ChartJS, Legend, Tooltip, ArcElement, Title, BarElement, LinearScale, CategoryScale } from "chart.js";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Bar, Pie } from "react-chartjs-2";
+import { RiGeminiFill } from "react-icons/ri";
+import Chats from "../components_/chats";
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
@@ -72,7 +75,7 @@ export default function Result() {
     ],
   });
   const [dataBarChart, setDataBarChart] = useState({
-    labels: ['2022', '2023', '2024', '2025', 'Pendapatan anda', 'Pendapatan Ideal'],
+    labels: ['2022', '2023', '2024', '2025'],
     datasets: [
       {
         label: 'Garis Kemiskinan (per-orang)',
@@ -91,6 +94,8 @@ export default function Result() {
       },
     ]
   });
+  const [chatBot, setChatBot] = useState<{ role: string, text: string }[]>([{ role: "user", text: "bisa kah kamu bantu saya mengenai hal ini?" }]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const formatToIDR = (amount?: number) => {
     const formatted = amount?.toLocaleString('id-ID', {
@@ -113,6 +118,23 @@ export default function Result() {
       acc[item.kategori] += item.nilai_rupiah
       return acc
     }, {} as Record<string, number>)
+
+    const chat = async () => {
+      const chatData = [{ role: "user", text: "bisa kah kamu bantu saya mengenai hal ini?" }];
+      try {
+        setIsLoading(true);
+        const chatResponse = await axios.post("https://family-flow-lilac.vercel.app/api/v1/chat", chatData);
+        if (chatResponse.status == 200) {
+          setChatBot(prev => [...prev, chatResponse.data.data]);
+          console.log(chatResponse.data.data);
+        }
+      } catch (err) {
+        console.log(err)
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    chat();
 
     const labels = Object.keys(dataKategoriKomoditas);
     const nilaiDataset = labels.map(label => dataKategoriKomoditas[label]);
@@ -167,16 +189,56 @@ export default function Result() {
     setBerdasarkanPendapatan(data.rekomendasi_keuangan.berdasarkan_pendapatan);
   }, []);
 
+  const submitMessage = async (event: FormEvent) => {
+    event.preventDefault();
+    const formData = new FormData(event.target as HTMLFormElement);
+    const data = {
+      role: "user",
+      text: String(formData.get("chat"))
+    }
+
+    setChatBot(prev => [...prev, data]);
+    (event.target as HTMLFormElement).chat.value = "";
+
+    try {
+      setIsLoading(true);
+      const response = await axios.post("https://family-flow-lilac.vercel.app/api/v1/chat", [data]);
+      if (response.status == 200) {
+        setChatBot(prev => [...prev, response.data.data]);
+        console.log(response);
+      }
+    } catch (err) {
+      console.log(err)
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   return <div className="">
     <div className="max-w-screen-lg px-4 xl:px-0 m-auto py-4">
       {/* <h2 className="text-3xl font-bold mb-3">Hasil</h2> */}
       <div>
-        <div className="p-4 border border-zinc-300 mb-4 rounded bg-zinc-100 text-zinc-700 flex justify-between">
+        <div className="p-4 border border-zinc-300 mb-4 rounded bg-zinc-100 text-zinc-700 flex flex-col">
           <div className="mb-3">
             <h4 className="text-xl font-bold mb-1">Informasi Sekarang</h4>
             <p><span className="font-medium">Pendapatan</span>: {formatToIDR(berdasarkanJumlah?.pendapatan)}</p>
             <p><span className="font-medium">Anggota Keluarga</span>: {berdasarkanJumlah?.jumlah_anggota_keluarga} orang</p>
           </div>
+
+          <div className="border border-zinc-300 bg-zinc-200/50 rounded">
+            <div className="border-b border-zinc-300 flex gap-2 items-center p-4">
+              <RiGeminiFill />
+              <h5 className="font-medium">Konsultasi dengan AI</h5>
+            </div>
+            <Chats chatBot={chatBot} isLoading={isLoading} />
+            <form onSubmit={submitMessage} className="p-4">
+              <div className="border border-zinc-300 rounded-full flex">
+                <input type="text" name="chat" className="text-start py-2 px-4 w-full outline-none" />
+                <button type="submit" className="bg-blue-700 hover:bg-blue-600 active:bg-blue-500 text-white py-2 px-4 rounded-full">send</button>
+              </div>
+            </form>
+          </div>
+
         </div>
         <div className="p-4 border border-zinc-300 mb-4 rounded bg-zinc-100 text-zinc-700 flex justify-between">
           <div className="mb-3 flex flex-col gap-1 items-start">
@@ -271,5 +333,5 @@ export default function Result() {
         </div>
       </div>
     </div>
-  </div>
+  </div >
 }

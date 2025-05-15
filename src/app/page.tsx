@@ -56,5 +56,26 @@ export default function Home() {
         </div>
       </div>
     </section>
+
+    <section id="hero" className="bg-[#043873] text-white pt-8" style={{ backgroundImage: "url(/Element.svg)", backgroundRepeat: "no-repeat", backgroundPosition: "center" }}>
+      <h1 className="text-3xl font-semibold text-center">Anggota</h1>
+      <div className="max-w-screen-lg px-4 xl:px-0 m-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 py-8">
+        <div className="bg-zinc-100/30 px-4 pt-4 rounded flex items-end">
+          <Image src={"/img/dwi.png"} alt="dwi" width={500} height={500} />
+        </div>
+        <div className="bg-zinc-100/30 px-4 pt-4 rounded flex items-end">
+          <Image src={"/img/yudis.png"} alt="yudis" width={500} height={500} />
+        </div>
+        <div className="bg-zinc-100/30 px-4 pt-4 rounded flex items-end">
+          <Image src={"/img/rangga.png"} alt="rangga" width={500} height={500} />
+        </div>
+        <div className="bg-zinc-100/30 px-4 pt-4 rounded flex items-end">
+          <Image src={"/img/adi.png"} alt="adi" width={500} height={500} />
+        </div>
+        <div className="bg-zinc-100/30 px-4 pt-4 rounded flex items-end">
+          <Image src={"/img/aziz.png"} alt="aziz" width={500} height={500} />
+        </div>
+      </div>
+    </section>
   </div>
 }
